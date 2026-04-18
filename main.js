@@ -56,8 +56,8 @@ jidNormalizedUser
 const {CONNECTING} = ws
 const {chain} = lodash
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000
-import QRCode from 'qrcode'
-import express from 'express'
+const QRCode = (await import('qrcode')).default
+const express = (await import('express')).default
 
 const app = express()
 let qrGlobal = ''
@@ -409,7 +409,7 @@ if (opts['autocleartmp'] && (global.support || {}).find) {
 }, 30 * 1000)
 }
 
-if (opts['server']) (await import('./server.js')).default(global.conn, PORT)
+// if (opts['server']) (await import('./server.js')).default(global.conn, PORT)
 
 const backupCreds = async () => {
 if (!fs.existsSync(credsFile)) {
@@ -458,6 +458,10 @@ async function connectionUpdate(update) {
 const {connection, lastDisconnect, isNewLogin, qr} = update
 global.stopped = connection
 if (isNewLogin) conn.isInit = true
+  if (qr) {
+  console.log('🌐 QR generado para web')
+  qrGlobal = await QRCode.toDataURL(qr)
+}
 
 if (connection === 'close' && !existsSync(`./${global.authFile}/creds.json`)) {
 if (!printingNoConn) {
@@ -835,3 +839,11 @@ for (const channelId of Object.values(global.ch)) {
 await conn.newsletterFollow(channelId).catch(() => {})
 }
 }
+app.get('/', (req, res) => {
+  if (!qrGlobal) return res.send('⏳ Esperando QR...')
+  res.send(`<img src="${qrGlobal}" />`)
+})
+
+app.listen(PORT, () => {
+  console.log('🌐 Web QR lista en puerto ' + PORT)
+})
