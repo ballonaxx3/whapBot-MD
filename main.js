@@ -56,6 +56,11 @@ jidNormalizedUser
 const {CONNECTING} = ws
 const {chain} = lodash
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000
+import QRCode from 'qrcode'
+import express from 'express'
+
+const app = express()
+let qrGlobal = ''
 
 async function flushLogs() {
 await Promise.resolve()
